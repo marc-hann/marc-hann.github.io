@@ -131,11 +131,21 @@ const period = (project: Project) =>
   const hashId = () => decodeURIComponent(location.hash.slice(1));
   const openItem = () => items.find((item) => item.classList.contains('is-open'));
 
+  const settleTimers = new WeakMap<HTMLElement, number>();
+
   const setOpen = (item: HTMLElement, open: boolean) => {
     const { row, detail } = parts(item);
+    clearTimeout(settleTimers.get(detail));
+    detail.classList.remove('settled');
     item.classList.toggle('is-open', open);
     detail.inert = !open;
     row.setAttribute('aria-expanded', String(open));
+    if (open) {
+      settleTimers.set(
+        detail,
+        window.setTimeout(() => item.classList.contains('is-open') && detail.classList.add('settled'), duration),
+      );
+    }
   };
 
   type Frame = { left: number; top: number; width: number; height: number; artTop: number };
@@ -259,12 +269,10 @@ const period = (project: Project) =>
 
   const revealIfNeeded = (item: HTMLElement) => {
     if (projects.clientWidth > 760) return;
-    const { row, detail } = parts(item);
+    const { row } = parts(item);
     const headerBottom = document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0;
-    const overflow = detail.getBoundingClientRect().bottom + 24 - innerHeight;
-    const room = row.getBoundingClientRect().top - headerBottom - 16;
-    const distance = Math.min(overflow, room);
-    if (distance > 0) scrollBy({ top: distance, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+    const distance = row.getBoundingClientRect().top - headerBottom - 16;
+    if (Math.abs(distance) > 24) scrollBy({ top: distance, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
   };
 
   let crossLink = false;
@@ -546,6 +554,10 @@ const period = (project: Project) =>
 
   .is-open > .detail {
     grid-template-rows: 1fr;
+  }
+
+  .is-open > .detail.settled {
+    display: block;
   }
 
   .detail-inner {
