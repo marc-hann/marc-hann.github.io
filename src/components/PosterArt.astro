@@ -1,0 +1,104 @@
+---
+/**
+ * Abstract poster composition in the Wada No. 179 colours.
+ * Used as a project cover until real artwork exists.
+ */
+interface Props {
+  /** Which of the four compositions to draw. */
+  variant?: 1 | 2 | 3 | 4;
+  class?: string;
+}
+
+const { variant = 1, class: className } = Astro.props;
+---
+
+<div class:list={['art', className]} data-variant={variant} aria-hidden="true">
+  <span class="s1"></span>
+  <span class="s2"></span>
+</div>
+
+<style>
+  .art {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+
+  span {
+    position: absolute;
+    display: block;
+  }
+
+  .art[data-variant='1'] {
+    background: var(--c1);
+  }
+  .art[data-variant='1'] .s1 {
+    width: 70%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    left: 15%;
+    top: 18%;
+    background: var(--c3);
+  }
+  .art[data-variant='1'] .s2 {
+    width: 100%;
+    height: 22%;
+    bottom: 0;
+    background: var(--c2);
+  }
+
+  .art[data-variant='2'] {
+    background: var(--c3);
+  }
+  .art[data-variant='2'] .s1 {
+    width: 55%;
+    height: 100%;
+    right: 0;
+    background: var(--c2);
+  }
+  .art[data-variant='2'] .s2 {
+    width: 40%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    left: 10%;
+    bottom: 12%;
+    background: var(--c1);
+  }
+
+  .art[data-variant='3'] {
+    background: var(--c2);
+  }
+  .art[data-variant='3'] .s1 {
+    inset: 12% 12% 40% 12%;
+    background: var(--c1);
+  }
+  .art[data-variant='3'] .s2 {
+    width: 76%;
+    height: 18%;
+    left: 12%;
+    bottom: 12%;
+    background: var(--c3);
+  }
+
+  .art[data-variant='4'] {
+    background: var(--c2);
+  }
+  .art[data-variant='4'] .s1 {
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+    left: -60%;
+    top: 20%;
+    background: var(--c3);
+  }
+  .art[data-variant='4'] .s2 {
+    width: 30%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    right: 14%;
+    top: 14%;
+    background: var(--c1);
+  }
+</style>

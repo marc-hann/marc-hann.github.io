@@ -1,0 +1,45 @@
+---
+/**
+ * Light/dark switch. Follows the OS setting until the visitor picks one, then remembers it.
+ * The saved choice is applied before first paint by the inline script in `Base.astro`.
+ */
+---
+
+<button type="button" class="theme-toggle label" data-theme-toggle>Theme</button>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  const root = document.documentElement;
+  const media = matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => (root.dataset.theme ? root.dataset.theme === 'dark' : media.matches);
+  const label = () => {
+    if (!button) return;
+    button.textContent = isDark() ? 'Light' : 'Dark';
+    button.setAttribute('aria-label', `Switch to ${isDark() ? 'light' : 'dark'} theme`);
+  };
+
+  button?.addEventListener('click', () => {
+    root.dataset.theme = isDark() ? 'light' : 'dark';
+    try {
+      localStorage.setItem('theme', root.dataset.theme);
+    } catch {}
+    label();
+  });
+  media.addEventListener('change', label);
+  label();
+</script>
+
+<style>
+  .theme-toggle {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: none;
+    padding: 0.375rem 0.75rem;
+    color: var(--fg);
+    cursor: pointer;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--fg);
+  }
+</style>

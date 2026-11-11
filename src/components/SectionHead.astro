@@ -1,0 +1,35 @@
+---
+/**
+ * Section heading row: a plain title on the left and a mono label on the right.
+ */
+interface Props {
+  title: string;
+  /** Short mono label shown on the right, such as a count or a hint. */
+  aside?: string;
+  /** Id for the heading, so the section can reference it with aria-labelledby. */
+  id?: string;
+}
+
+const { title, aside, id } = Astro.props;
+---
+
+<div class="head">
+  <h2 id={id}>{title}</h2>
+  {aside && <span class="label">{aside}</span>}
+</div>
+
+<style>
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: var(--t-body);
+    font-weight: 400;
+  }
+</style>

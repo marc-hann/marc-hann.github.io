@@ -1,0 +1,69 @@
+---
+/**
+ * Cover art for a project: its illustration when it has one, otherwise a poster composition.
+ */
+import PosterArt from './PosterArt.astro';
+import QuestionnaireEngine from './illustrations/QuestionnaireEngine.astro';
+import ClinicalQuestionnaires from './illustrations/ClinicalQuestionnaires.astro';
+import HrPlatform from './illustrations/HrPlatform.astro';
+import TenantApp from './illustrations/TenantApp.astro';
+import PrimeMvp from './illustrations/PrimeMvp.astro';
+import GenomicUpload from './illustrations/GenomicUpload.astro';
+import VariantModel from './illustrations/VariantModel.astro';
+import DesignSystem from './illustrations/DesignSystem.astro';
+import PrimeUi from './illustrations/PrimeUi.astro';
+import MyHedera from './illustrations/MyHedera.astro';
+import LabPrep from './illustrations/LabPrep.astro';
+import type { Project } from '../lib/projects';
+
+interface Props {
+  project: Project;
+  class?: string;
+}
+
+const { project, class: className } = Astro.props;
+
+const illustrations = {
+  'questionnaire-engine': QuestionnaireEngine,
+  'clinical-questionnaires': ClinicalQuestionnaires,
+  'hr-platform': HrPlatform,
+  'tenant-app': TenantApp,
+  'prime-mvp': PrimeMvp,
+  'genomic-upload': GenomicUpload,
+  'variant-model': VariantModel,
+  'design-system': DesignSystem,
+  'prime-ui': PrimeUi,
+  myhedera: MyHedera,
+  'lab-prep': LabPrep,
+};
+
+const Illustration = project.data.illustration ? illustrations[project.data.illustration] : undefined;
+---
+
+{
+  Illustration ? (
+    <div class:list={['art', 'illustration', className]} aria-hidden="true">
+      <Illustration />
+    </div>
+  ) : (
+    <PosterArt variant={project.data.poster} class={className} />
+  )
+}
+
+<style>
+  .illustration {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+
+  .illustration :global(svg) {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>

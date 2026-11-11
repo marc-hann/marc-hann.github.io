@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import ProjectIndex from '../components/ProjectIndex.astro';
+import About from '../components/About.astro';
+import { getProjects } from '../lib/projects';
+
+const projects = await getProjects();
+---
+
+<Base>
+  <Hero />
+  <ProjectIndex projects={projects} />
+  <About />
+</Base>

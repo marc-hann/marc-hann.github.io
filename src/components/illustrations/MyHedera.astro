@@ -1,0 +1,43 @@
+---
+/**
+ * myHedera: a patient's phone tracking adverse effects across treatment cycles, with a capsule
+ * beside it.
+ */
+const points = [
+  [144, 252],
+  [174, 222],
+  [204, 238],
+  [234, 184],
+  [258, 204],
+];
+const cycles = [150, 175, 200, 225, 250];
+---
+
+<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+  <rect class="i-b" width="400" height="400"></rect>
+  <g transform="translate(306 112) rotate(-30)">
+    <path class="i-r" d="M0 -13 H-22 A13 13 0 0 0 -22 13 H0 Z"></path>
+    <path class="i-y" d="M0 -13 H22 A13 13 0 0 1 22 13 H0 Z"></path>
+    <rect class="i-p" opacity="0.4" x="-24" y="-8" width="16" height="4" rx="2"></rect>
+  </g>
+  <rect class="i-p" x="120" y="70" width="160" height="270" rx="18"></rect>
+  <rect class="i-k" x="180" y="80" width="40" height="10" rx="5"></rect>
+  <rect class="i-k" opacity="0.3" x="176" y="326" width="48" height="4" rx="2"></rect>
+  <rect class="i-k" opacity="0.25" x="140" y="102" width="80" height="8" rx="4"></rect>
+  <rect class="i-y" x="140" y="120" width="120" height="38" rx="6"></rect>
+  <rect class="i-k" opacity="0.35" x="152" y="135" width="70" height="7" rx="3.5"></rect>
+  <path class="s-k" opacity="0.08" stroke-width="1" d="M140 180 H262 M140 225 H262"></path>
+  <path class="s-r" opacity="0.7" stroke-width="2" stroke-dasharray="4 4" d="M140 200 H262"></path>
+  <path class="s-k" opacity="0.15" stroke-width="2" d="M140 270 H262"></path>
+  <polyline class="s-b" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points={points.map((p) => p.join(',')).join(' ')}></polyline>
+  {points.map(([x, y], i) => <circle class={i === 3 ? 'i-r' : 'i-b'} cx={x} cy={y} r={i === 3 ? 7 : 4}></circle>)}
+  {
+    cycles.map((x, i) =>
+      i < 3 ? (
+        <circle class="i-r" cx={x} cy="300" r="6"></circle>
+      ) : (
+        <circle class="s-k" fill="none" opacity="0.35" stroke-width="2" cx={x} cy="300" r="5"></circle>
+      ),
+    )
+  }
+</svg>

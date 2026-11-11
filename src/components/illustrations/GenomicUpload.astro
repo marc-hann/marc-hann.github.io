@@ -1,0 +1,38 @@
+---
+/**
+ * Genomic file upload: a large file split into parts, most already uploaded, one resuming, rising
+ * into a storage bucket.
+ */
+const parts = [
+  { x: 126, y: 196, state: 'done' },
+  { x: 180, y: 196, state: 'done' },
+  { x: 234, y: 196, state: 'done' },
+  { x: 126, y: 262, state: 'done' },
+  { x: 180, y: 262, state: 'resuming' },
+  { x: 234, y: 262, state: 'waiting' },
+];
+---
+
+<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+  <rect class="i-r" width="400" height="400"></rect>
+  <path class="i-k" d="M136 80 L152 128 A48 9 0 0 0 248 128 L264 80 Z"></path>
+  <path class="s-p" fill="none" opacity="0.3" stroke-width="2" d="M144 104 A56 10 0 0 0 256 104"></path>
+  <ellipse class="i-k" cx="200" cy="80" rx="64" ry="14"></ellipse>
+  <ellipse class="i-p" opacity="0.22" cx="200" cy="80" rx="56" ry="9"></ellipse>
+  <path class="s-p" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M200 170 V146 M188 158 L200 146 L212 158"></path>
+  <rect class="i-p" x="110" y="180" width="180" height="154" rx="6"></rect>
+  {
+    parts.map((part) =>
+      part.state === 'done' ? (
+        <rect class="i-b" x={part.x} y={part.y} width="40" height="56" rx="3"></rect>
+      ) : part.state === 'resuming' ? (
+        <>
+          <rect class="i-k" opacity="0.12" x={part.x} y={part.y} width="40" height="56" rx="3"></rect>
+          <rect class="i-y" x={part.x} y={part.y + 24} width="40" height="32" rx="3"></rect>
+        </>
+      ) : (
+        <rect class="s-k" fill="none" opacity="0.3" stroke-width="2" x={part.x + 1} y={part.y + 1} width="38" height="54" rx="3"></rect>
+      ),
+    )
+  }
+</svg>

@@ -1,0 +1,47 @@
+---
+/**
+ * Hedera Prime UI: an application window with navigation, a sequencing run QC chart, a report
+ * preview and a variant table.
+ */
+const bars = [40, 62, 50, 70, 56];
+const rows = [214, 238, 262, 286];
+---
+
+<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+  <rect class="i-r" width="400" height="400"></rect>
+  <rect class="i-p" x="60" y="80" width="280" height="236" rx="8"></rect>
+  <rect class="i-k" x="60" y="80" width="280" height="22" rx="8"></rect>
+  <rect class="i-k" x="60" y="94" width="280" height="8"></rect>
+  <circle class="i-p" opacity="0.5" cx="74" cy="91" r="3.5"></circle>
+  <circle class="i-p" opacity="0.5" cx="86" cy="91" r="3.5"></circle>
+  <circle class="i-p" opacity="0.5" cx="98" cy="91" r="3.5"></circle>
+  <rect class="i-p" opacity="0.18" x="150" y="86" width="120" height="10" rx="5"></rect>
+  <rect class="i-b" x="60" y="102" width="56" height="214"></rect>
+  <rect class="i-p" opacity="0.7" x="72" y="120" width="32" height="6" rx="3"></rect>
+  <rect class="i-p" opacity="0.4" x="72" y="138" width="26" height="6" rx="3"></rect>
+  <rect class="i-p" opacity="0.4" x="72" y="156" width="30" height="6" rx="3"></rect>
+  {
+    bars.map((h, i) => (
+      <rect class={i === 3 ? 'i-r' : 'i-y'} x={132 + i * 22} y={190 - h} width="14" height={h}></rect>
+    ))
+  }
+  <rect class="i-k" opacity="0.2" x="128" y="190" width="112" height="1"></rect>
+  <path class="s-k" opacity="0.4" stroke-width="1.5" stroke-dasharray="3 3" d="M128 125 H240"></path>
+  <rect class="i-k" opacity="0.07" x="128" y="192" width="198" height="10"></rect>
+  <rect class="i-k" opacity="0.08" x="252" y="118" width="74" height="72" rx="4"></rect>
+  <rect class="i-k" opacity="0.25" x="262" y="130" width="50" height="5" rx="2.5"></rect>
+  <rect class="i-k" opacity="0.25" x="262" y="142" width="38" height="5" rx="2.5"></rect>
+  <rect class="i-k" opacity="0.25" x="262" y="154" width="46" height="5" rx="2.5"></rect>
+  <rect class="i-r" x="262" y="170" width="26" height="8" rx="4"></rect>
+  {
+    rows.map((y, i) => (
+      <>
+        <rect class="i-k" opacity="0.1" x="128" y={y - 10} width="198" height="1"></rect>
+        <rect class="i-y" x="132" y={y - 2} width="30" height="12" rx="3"></rect>
+        <rect class="i-k" opacity="0.25" x="172" y={y + 1} width={[86, 64, 100, 72][i]} height="6" rx="3"></rect>
+        <circle class={i === 1 ? 'i-r' : 'i-b'} cx="314" cy={y + 4} r="5"></circle>
+      </>
+    ))
+  }
+  <path class="i-k s-p" stroke-width="2" stroke-linejoin="round" d="M282 176 V202 L289 196 L294 207 L299 205 L294 194 H303 Z"></path>
+</svg>

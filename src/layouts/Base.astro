@@ -1,0 +1,52 @@
+---
+/**
+ * Page shell: document head, global styles, site header and footer.
+ */
+import '@fontsource-variable/instrument-sans/wght.css';
+import '@fontsource/fragment-mono/400.css';
+import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
+interface Props {
+  /** Page title. The site name is appended. */
+  title?: string;
+  /** Meta description for search and link previews. */
+  description?: string;
+}
+
+const siteName = 'Marcus Hänninen';
+const { title, description = 'Marcus Hänninen is a Helsinki-based startup engineer building software for complex domains, from genomics to cancer care.' } = Astro.props;
+const pageTitle = title ? `${title} — ${siteName}` : siteName;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <title>{pageTitle}</title>
+    <script is:inline>
+      try {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <SiteHeader siteName={siteName} />
+    <div class="page">
+      <main id="main">
+        <slot />
+      </main>
+      <SiteFooter siteName={siteName} />
+    </div>
+  </body>
+</html>

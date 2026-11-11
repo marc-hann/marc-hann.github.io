@@ -1,0 +1,703 @@
+---
+/**
+ * Every project as a table grouped by year, newest first.
+ *
+ * Hovering a row dims it and reveals its art from the middle of the title column to the page edge,
+ * with a copy of the row's text clipped together with the art so the covered part reads in ink or
+ * paper depending on the art's tone.
+ *
+ * Clicking a row unfolds its details in place: the details grow open, and when the row was
+ * hovered its art flies from the pinned hover spot into the details. A row opens when the URL hash
+ * matches the project id (for example `#myhedera`), so every project has a shareable link.
+ */
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import ProjectArt from './ProjectArt.astro';
+import SectionHead from './SectionHead.astro';
+import { artBackground, artTone } from '../lib/art';
+import { groupByYear, projectHref, type Project } from '../lib/projects';
+
+interface Props {
+  projects: Project[];
+}
+
+const { projects } = Astro.props;
+const groups = groupByYear(projects);
+const contents = new Map(
+  await Promise.all(projects.map(async (project) => [project.id, (await render(project)).Content] as const)),
+);
+const period = (project: Project) =>
+  project.data.until ? `${project.data.year} — ${project.data.until}` : String(project.data.year);
+---
+
+<section class="wrap section projects instant" id="projects" aria-labelledby="projects-title">
+  <SectionHead id="projects-title" title="Projects" aside={`${projects.length} entries · Year ↓`} />
+  <div class="index-head label" aria-hidden="true">
+    <span>Project</span><span>Role</span><span>Stack</span><span class="end">Status</span>
+  </div>
+  <div class="groups">
+    {
+      groups.map(([year, items]) => (
+        <div class="group reveal">
+          <div class="year">{year}</div>
+          <ul class="rows">
+            {items.map((project) => {
+              const { title, role, stack, status, links, images } = project.data;
+              const Content = contents.get(project.id)!;
+              const detailId = `detail-${project.id}`;
+              return (
+                <li data-project={project.id}>
+                  <a class="row" href={projectHref(project)} aria-expanded="false" aria-controls={detailId}>
+                    <span class="p">{title}</span>
+                    <span class="r">{role}</span>
+                    <span class="k">{stack.join(' · ')}</span>
+                    <span class="st">{status}</span>
+                  </a>
+                  <div class="row-art" data-tone={artTone(project)} aria-hidden="true">
+                    <div class="row-art-frame" style={`--art-bg: ${artBackground(project)}`}>
+                      <ProjectArt project={project} />
+                    </div>
+                    <div class="row row-overlay">
+                      <span class="p">{title}</span>
+                      <span class="r">{role}</span>
+                      <span class="k">{stack.join(' · ')}</span>
+                      <span class="st">{status}</span>
+                    </div>
+                  </div>
+                  <div class="detail" id={detailId} inert>
+                    <div class="detail-inner">
+                    <div class="detail-text">
+                      <div class="summary">
+                        <Content />
+                      </div>
+                      {(project.data.until || links.live || links.appStore || links.repo) && (
+                        <div class="meta">
+                          {project.data.until && <span class="label">{period(project)}</span>}
+                          {links.live && (
+                            <a class="link" href={links.live} target="_blank" rel="noopener">
+                              Visit site ↗
+                            </a>
+                          )}
+                          {links.appStore && (
+                            <a class="link" href={links.appStore} target="_blank" rel="noopener">
+                              App Store ↗
+                            </a>
+                          )}
+                          {links.repo && (
+                            <a class="link" href={links.repo} target="_blank" rel="noopener">
+                              Source ↗
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      {images.length > 0 && (
+                        <div class="gallery">
+                          {images.map((img) => (
+                            <Image src={img.src} alt={img.alt} widths={[200, 400]} sizes="200px" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div class="detail-art" style={`--art-bg: ${artBackground(project)}`}>
+                      <ProjectArt project={project} />
+                    </div>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<script>
+  const items = [...document.querySelectorAll<HTMLElement>('.projects li[data-project]')];
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+  const duration = 600;
+  const easing = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
+
+  const parts = (item: HTMLElement) => ({
+    row: item.querySelector<HTMLAnchorElement>('a.row')!,
+    rowArt: item.querySelector<HTMLElement>('.row-art')!,
+    hoverArt: item.querySelector<HTMLElement>('.row-art-frame')!,
+    detail: item.querySelector<HTMLElement>('.detail')!,
+    detailArt: item.querySelector<HTMLElement>('.detail-art')!,
+  });
+
+  const hashId = () => decodeURIComponent(location.hash.slice(1));
+  const openItem = () => items.find((item) => item.classList.contains('is-open'));
+
+  const setOpen = (item: HTMLElement, open: boolean) => {
+    const { row, detail } = parts(item);
+    item.classList.toggle('is-open', open);
+    detail.inert = !open;
+    row.setAttribute('aria-expanded', String(open));
+  };
+
+  type Frame = { left: number; top: number; width: number; height: number; artTop: number };
+
+  const frameOf = (frame: HTMLElement): Frame => {
+    const box = frame.getBoundingClientRect();
+    const art = frame.querySelector<HTMLElement>('.art')?.getBoundingClientRect();
+    return {
+      left: box.left,
+      top: box.top,
+      width: box.width,
+      height: box.height,
+      artTop: art ? box.height - art.height : 0,
+    };
+  };
+
+  const placeGhost = (source: HTMLElement) => {
+    const ghost = source.cloneNode(true) as HTMLElement;
+    Object.assign(ghost.style, {
+      position: 'fixed',
+      maxHeight: 'none',
+      aspectRatio: 'auto',
+      margin: '0',
+      zIndex: '20',
+      opacity: '1',
+      transition: 'none',
+      pointerEvents: 'none',
+    });
+    document.body.append(ghost);
+    return ghost;
+  };
+
+  const drawGhost = (ghost: HTMLElement, f: Frame) => {
+    ghost.style.left = `${f.left}px`;
+    ghost.style.top = `${f.top}px`;
+    ghost.style.width = `${f.width}px`;
+    ghost.style.height = `${f.height}px`;
+    ghost.style.setProperty('--art-top', `${f.artTop}px`);
+  };
+
+  const fly = (ghost: HTMLElement, from: Frame, to: () => Frame, draw = (f: Frame) => drawGhost(ghost, f)) => {
+    const timing = ghost.animate([{}, {}], { duration, easing });
+    const mix = (a: number, b: number, p: number) => a + (b - a) * p;
+    const frame = () => {
+      const p = timing.effect?.getComputedTiming().progress ?? 1;
+      const end = to();
+      draw({
+        left: mix(from.left, end.left, p),
+        top: mix(from.top, end.top, p),
+        width: mix(from.width, end.width, p),
+        height: mix(from.height, end.height, p),
+        artTop: mix(from.artTop, end.artTop, p),
+      });
+      if (timing.playState !== 'finished') requestAnimationFrame(frame);
+    };
+    frame();
+    return timing.finished;
+  };
+
+  const flyArt = (from: Frame, target: HTMLElement) => {
+    if (!from.width || !target.getBoundingClientRect().width) return;
+    const ghost = placeGhost(target);
+    drawGhost(ghost, from);
+    target.style.opacity = '0';
+    fly(ghost, from, () => frameOf(target)).finally(() => {
+      target.style.transition = 'none';
+      target.style.opacity = '';
+      ghost.remove();
+      requestAnimationFrame(() => (target.style.transition = ''));
+    });
+  };
+
+  const flyBack = (item: HTMLElement) => {
+    const { rowArt, hoverArt, detailArt } = parts(item);
+    const overlay = rowArt.querySelector<HTMLElement>('.row-overlay');
+    const from = frameOf(detailArt);
+    const ghost = detailArt.cloneNode(true) as HTMLElement;
+    Object.assign(ghost.style, {
+      position: 'absolute',
+      maxHeight: 'none',
+      aspectRatio: 'auto',
+      margin: '0',
+      opacity: '1',
+      transition: 'none',
+      pointerEvents: 'none',
+    });
+    detailArt.style.transition = 'none';
+    detailArt.style.opacity = '0';
+
+    setOpen(item, false);
+
+    const restore = () => {
+      ghost.remove();
+      rowArt.style.clipPath = '';
+      hoverArt.style.opacity = '';
+      if (overlay) overlay.style.clipPath = '';
+      detailArt.style.opacity = '';
+      detailArt.style.transition = '';
+    };
+
+    if (!from.width || !hoverArt.getBoundingClientRect().width) return restore();
+
+    rowArt.prepend(ghost);
+    rowArt.style.clipPath = 'none';
+    hoverArt.style.opacity = '0';
+
+    const draw = (f: Frame) => {
+      const origin = rowArt.getBoundingClientRect();
+      drawGhost(ghost, { ...f, left: f.left - origin.left, top: f.top - origin.top });
+      if (!overlay) return;
+      const r = overlay.getBoundingClientRect();
+      overlay.style.clipPath = `inset(${f.top - r.top}px ${r.right - f.left - f.width}px ${r.bottom - f.top - f.height}px ${f.left - r.left}px)`;
+    };
+    draw(from);
+
+    fly(ghost, from, () => frameOf(hoverArt), draw).then(() => {
+      hoverArt.style.opacity = '';
+      ghost.animate({ opacity: [1, 0] }, { duration: 200, easing: 'ease-out', fill: 'forwards' }).finished.finally(restore);
+    });
+  };
+
+  const revealIfNeeded = (item: HTMLElement) => {
+    if (projects.clientWidth > 760) return;
+    const { row, detail } = parts(item);
+    const headerBottom = document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0;
+    const overflow = detail.getBoundingClientRect().bottom + 24 - innerHeight;
+    const room = row.getBoundingClientRect().top - headerBottom - 16;
+    const distance = Math.min(overflow, room);
+    if (distance > 0) scrollBy({ top: distance, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+  };
+
+  let crossLink = false;
+
+  const sync = (animate: boolean) => {
+    const target = items.find((item) => item.dataset.project === hashId());
+    const current = openItem();
+    if (location.hash && !target) return;
+    if (target === current) return;
+
+    if (crossLink && target) {
+      crossLink = false;
+      const switching = [current, target].filter((item): item is HTMLElement => Boolean(item));
+      switching.forEach((item) => item.classList.add('instant'));
+      if (current) setOpen(current, false);
+      setOpen(target, true);
+      parts(target).row.scrollIntoView({ block: 'start', behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => switching.forEach((item) => item.classList.remove('instant'))),
+      );
+      return;
+    }
+
+    if (!animate) {
+      if (current) setOpen(current, false);
+      if (target) {
+        setOpen(target, true);
+        parts(target).row.scrollIntoView({ block: 'start' });
+      }
+      return;
+    }
+
+    const hovered = finePointer.matches && target && !current && parts(target).row.matches(':hover');
+    const from = hovered ? frameOf(parts(target).hoverArt) : null;
+
+    if (current && !target && finePointer.matches && parts(current).row.matches(':hover') && !reducedMotion.matches)
+      flyBack(current);
+    else if (current) setOpen(current, false);
+    if (!target) return;
+    setOpen(target, true);
+    if (from && !reducedMotion.matches) flyArt(from, parts(target).detailArt);
+    clearTimeout(revealTimer);
+    revealTimer = window.setTimeout(() => revealIfNeeded(target), reducedMotion.matches ? 0 : duration);
+  };
+
+  document.querySelectorAll<HTMLAnchorElement>('.summary a[href^="#"]').forEach((link) =>
+    link.addEventListener('click', () => (crossLink = true)),
+  );
+
+  let revealTimer = 0;
+  const cancelReveal = () => clearTimeout(revealTimer);
+  addEventListener('wheel', cancelReveal, { passive: true });
+  addEventListener('touchstart', cancelReveal, { passive: true });
+
+  const close = () => {
+    history.replaceState(null, '', location.pathname + location.search);
+    sync(true);
+  };
+
+  for (const item of items) {
+    const { row } = parts(item);
+    row.addEventListener('click', (event) => {
+      if (!item.classList.contains('is-open')) return;
+      event.preventDefault();
+      close();
+    });
+  }
+
+  addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && openItem()) close();
+  });
+  const projects = document.querySelector<HTMLElement>('.projects')!;
+  let scrollEnd = 0;
+  addEventListener(
+    'scroll',
+    () => {
+      projects.classList.add('is-scrolling');
+      clearTimeout(scrollEnd);
+      scrollEnd = window.setTimeout(() => projects.classList.remove('is-scrolling'), 150);
+    },
+    { passive: true },
+  );
+
+  addEventListener('hashchange', () => sync(true));
+  sync(false);
+  requestAnimationFrame(() => requestAnimationFrame(() => projects.classList.remove('instant')));
+</script>
+
+<style>
+  .projects {
+    --year-col: clamp(5rem, 13cqi, 10rem);
+    container: projects / inline-size;
+    padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .index-head,
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1.3fr) minmax(0, 1.5fr) 7rem;
+    gap: 1rem 1.5rem;
+  }
+
+  .index-head {
+    padding-left: var(--year-col);
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .end {
+    text-align: right;
+  }
+
+  .group {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--year-col) minmax(0, 1fr);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .group:last-child {
+    border-bottom: none;
+  }
+
+  .group:has(.row:is(:hover, :focus-visible)) {
+    z-index: 3;
+  }
+
+  .year {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + var(--header-h) + 0.75rem);
+    align-self: baseline;
+    padding-block: 1.5rem 3rem;
+    font-family: var(--font-mono);
+    font-size: clamp(1.5rem, 3.2cqi, 2.75rem);
+    font-weight: 300;
+    letter-spacing: -0.06em;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rows {
+    align-self: baseline;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rows > li {
+    position: relative;
+  }
+
+  .rows > li + li {
+    border-top: 1px solid var(--line);
+  }
+
+  .rows > li:has(.row:is(:hover, :focus-visible)) {
+    z-index: 3;
+  }
+
+  .row {
+    position: relative;
+    z-index: 1;
+    align-items: baseline;
+    padding-block: 1.5rem 3rem;
+    text-decoration: none;
+    transition:
+      color 0.25s,
+      padding-bottom 0.55s var(--ease-out);
+  }
+
+  .p {
+    font-size: clamp(1.5rem, 3.2cqi, 2.75rem);
+    font-weight: var(--title-weight);
+    letter-spacing: calc(var(--display-track) * 0.5);
+    line-height: 1.05;
+    text-wrap: balance;
+    transition: color 0.25s;
+  }
+
+  .r,
+  .k {
+    color: var(--fg-2);
+    font-size: var(--t-small);
+  }
+
+  .st {
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: right;
+  }
+
+  .row:is(:hover, :focus-visible) {
+    color: var(--fg-2);
+  }
+
+  .is-open > .row {
+    padding-bottom: 1.5rem;
+  }
+
+  .is-open > .row .p {
+    color: var(--accent);
+  }
+
+  .row-art {
+    --art-left: 30%;
+    position: absolute;
+    inset: 0 calc(-1 * var(--gutter-r)) auto 0;
+    z-index: 2;
+    pointer-events: none;
+    clip-path: inset(0 0 100% var(--art-left));
+    transition: clip-path 0.5s var(--ease-out);
+  }
+
+  .is-open > .row-art {
+    display: none;
+  }
+
+  .row-art-frame,
+  .detail-art {
+    position: relative;
+    background: var(--art-bg);
+  }
+
+  .row-art-frame {
+    width: calc(100% - var(--art-left));
+    max-height: 80vh;
+    --art-top: 6.5rem;
+    margin-left: auto;
+    aspect-ratio: 16 / 9;
+    will-change: transform;
+  }
+
+  .row-art-frame :global(.art),
+  .detail-art :global(.art) {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    translate: -50% 0;
+    height: calc(100% - var(--art-top));
+    width: auto;
+    max-width: none;
+    aspect-ratio: 1 / 1;
+    border-radius: 0;
+  }
+
+  .row-overlay {
+    position: absolute;
+    inset: 0 var(--gutter-r) auto 0;
+  }
+
+  .row-art[data-tone='light'] .row-overlay {
+    color: var(--ink);
+  }
+
+  .row-art[data-tone='dark'] .row-overlay {
+    color: var(--paper);
+  }
+
+  .row-overlay :is(.r, .k) {
+    color: inherit;
+    opacity: 0.75;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .projects:not(.is-scrolling) .row:is(:hover, :focus-visible) + .row-art {
+      clip-path: inset(0 0 0 var(--art-left));
+    }
+  }
+
+  .detail {
+    display: grid;
+    grid-template-rows: 0fr;
+    margin-right: calc(-1 * var(--gutter-r));
+    transition: grid-template-rows 0.55s var(--ease-out);
+  }
+
+  .is-open > .detail {
+    grid-template-rows: 1fr;
+  }
+
+  .detail-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 0 clamp(2rem, 4cqi, 4rem);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .detail-inner > * {
+    margin-bottom: 2.5rem;
+  }
+
+  .detail-text {
+    display: grid;
+    gap: 1.25rem;
+    opacity: 0;
+    translate: 0 0.75rem;
+    transition:
+      opacity 0.25s,
+      translate 0.3s;
+  }
+
+  .is-open .detail-text {
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity 0.45s 0.15s,
+      translate 0.6s 0.1s var(--ease-out);
+  }
+
+  .detail-art {
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .is-open .detail-art {
+    opacity: 1;
+  }
+
+  .instant :is(.row, .p, .row-art, .detail, .detail-text, .detail-art) {
+    transition: none !important;
+  }
+
+  .summary {
+    max-width: 58ch;
+  }
+
+  .summary :global(p) {
+    margin: 0 0 0.875em;
+  }
+
+  .summary :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .summary :global(a) {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: color 0.2s;
+  }
+
+  .summary :global(a:hover) {
+    color: var(--accent);
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1.25rem;
+  }
+
+  .link {
+    color: var(--fg);
+    font-size: var(--t-small);
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+    text-underline-offset: 0.2em;
+  }
+
+  .link:hover {
+    color: var(--accent);
+    text-decoration-color: currentColor;
+  }
+
+  .gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .gallery :global(img) {
+    width: auto;
+    height: 9rem;
+  }
+
+  .detail-art {
+    --art-top: 1.5rem;
+    max-height: 45vh;
+    aspect-ratio: 16 / 9;
+  }
+
+  @container projects (max-width: 760px) {
+    .index-head {
+      display: none;
+    }
+
+    .group {
+      grid-template-columns: 3.5rem minmax(0, 1fr);
+    }
+
+    .year {
+      font-size: var(--t-small);
+      letter-spacing: 0;
+    }
+
+    .row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.25rem 1rem;
+    }
+
+    .r,
+    .k {
+      grid-column: 1;
+    }
+
+    .st {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .row-art {
+      display: none;
+    }
+
+    .detail {
+      margin-right: 0;
+    }
+
+    .detail-inner {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .detail-art {
+      order: -1;
+      max-height: 35vh;
+    }
+  }
+</style>

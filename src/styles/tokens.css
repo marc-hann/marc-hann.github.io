@@ -1,0 +1,80 @@
+/**
+ * Design tokens.
+ * Palette: Sanzo Wada, A Dictionary of Color Combinations, No. 179. Neutrals are tinted toward
+ * Golden Yellow (paper) and Deep Lyons Blue (ink).
+ * Type: Instrument Sans + Fragment Mono.
+ */
+
+:root {
+  --wada-red-orange: #dd4027;
+  --wada-golden-yellow: #f3a257;
+  --wada-deep-lyons-blue: #1c4286;
+
+  --paper: #faf3ed;
+  --ink: #0d1626;
+
+  --bg: var(--paper);
+  --bg-2: #f2e7df;
+  --fg: var(--ink);
+  --fg-2: #5a6475;
+  --line: #ddd2c9;
+
+  --accent: var(--wada-red-orange);
+  --on-accent: var(--ink);
+  --c1: var(--wada-red-orange);
+  --c2: var(--wada-golden-yellow);
+  --c3: var(--wada-deep-lyons-blue);
+  --on-c1: var(--ink);
+  --on-c2: var(--ink);
+  --on-c3: var(--paper);
+
+  --font-sans: 'Instrument Sans Variable', 'Helvetica Neue', Arial, system-ui, sans-serif;
+  --font-mono: 'Fragment Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --display-weight: 400;
+  --title-weight: 600;
+  --display-track: -0.045em;
+
+  --t-display: clamp(3.25rem, 12cqi, 11rem);
+  --t-h2: clamp(1.75rem, 4.2cqi, 3.25rem);
+  --t-h3: 1.375rem;
+  --t-body: 1.0625rem;
+  --t-small: 0.875rem;
+  --t-label: 0.6875rem;
+
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  --section-space: clamp(3rem, 7vw, 6rem);
+  --header-h: 3.5rem;
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light;
+}
+
+@media (min-width: 900px) {
+  :root {
+    --gutter-l: max(32px, env(safe-area-inset-left, 0px));
+    --gutter-r: max(32px, env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #090e18;
+    --bg-2: #101724;
+    --fg: #f2e9e2;
+    --fg-2: #a89c92;
+    --line: #252e3d;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #090e18;
+  --bg-2: #101724;
+  --fg: #f2e9e2;
+  --fg-2: #a89c92;
+  --line: #252e3d;
+  color-scheme: dark;
+}

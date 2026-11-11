@@ -1,0 +1,132 @@
+---
+/**
+ * About section: experience, education and toolkit side by side.
+ */
+import SectionHead from './SectionHead.astro';
+
+const experience = [
+  { role: 'Senior Software Engineer (Founding Engineer)', org: 'Hedera Dx', from: '2022', to: 'Now' },
+  { role: 'Co-founder & CTO', org: 'Komu Homes', from: '2021', to: '2022' },
+  { role: 'Software Consultant', org: 'TietoEvry', from: '2021', to: '2022' },
+  { role: 'Software Engineer', org: 'Kaiku Health', from: '2019', to: '2021' },
+];
+
+const toolkit = [
+  'TypeScript',
+  'React',
+  'React Native',
+  'Next.js',
+  'Node.js',
+  'PostgreSQL',
+  'AWS',
+  'Python',
+  'Ruby on Rails',
+  'Firebase',
+];
+
+const education = [
+  { degree: 'M.Sc. (Tech.), Industrial Engineering & Management', school: 'Aalto University' },
+  { degree: 'B.Sc. (Tech.), Information Networks', school: 'Aalto University' },
+];
+---
+
+<section class="wrap section about" id="about" aria-labelledby="about-title">
+  <SectionHead id="about-title" title="About" />
+  <div class="lists">
+    <div>
+      <h3 class="label">Experience</h3>
+      <ol class="entries">
+        {
+          experience.map((item) => (
+            <li>
+              <span>
+                {item.role}, {item.org}
+              </span>
+              <span class="label years">
+                <span>{item.from} —</span> <span>{item.to}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+    <div>
+      <h3 class="label">Education</h3>
+      <ul class="entries">
+        {
+          education.map((item) => (
+            <li>
+              <span>
+                {item.degree}, {item.school}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <div>
+      <h3 class="label">Toolkit</h3>
+      <ul class="toolkit">
+        {toolkit.map((tool) => <li>{tool}</li>)}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about {
+    padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .lists {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem clamp(2rem, 4vw, 4rem);
+    align-items: start;
+  }
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-weight: 400;
+  }
+
+  ol,
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .entries li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 1rem;
+    padding-block: 0.375rem;
+    font-size: var(--t-small);
+  }
+
+  .years {
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .toolkit {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .toolkit li {
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: var(--t-small);
+  }
+
+  @media (max-width: 900px) {
+    .lists {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
